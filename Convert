@@ -1,0 +1,78 @@
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>XML Dönüştürücü</title>
+    <link rel="shortcut icon" type="image/png" href="/favicon.png"/>
+</head>
+<body>
+    <h1>LOGİN YAZILIM XML DÖNÜŞTÜRÜCÜ</h1>
+
+    <label for="xmlFile">XML Dosyası</label>
+    <input type="file" id="xmlFile" accept=".xml">
+    <label for="xsltFile">XSLT Dosyası</label>
+    <input type="file" id="xsltFile" accept=".xslt">
+
+    <button onclick="transformXML()">Dönüştür</button>
+    <button onclick="saveHTML()">Görüntüle</button>
+
+    <div id="output">
+        </div>
+
+    <script>
+        function transformXML() {
+            var xmlFileInput = document.getElementById('xmlFile');
+            var xsltFileInput = document.getElementById('xsltFile');
+            var outputDiv = document.getElementById('output');
+
+            var xmlFile = xmlFileInput.files[0];
+            var xsltFile = xsltFileInput.files[0];
+
+            if (!xmlFile || !xsltFile) {
+                alert('Lütfen XML ve XSLT dosyalarını seçin.');
+                return;
+            }
+
+            var xmlReader = new FileReader();
+            xmlReader.onload = function (e) {
+                var xmlContent = e.target.result;
+
+                var xsltReader = new FileReader();
+                xsltReader.onload = function (e) {
+                    var xsltContent = e.target.result;
+
+                    var parser = new DOMParser();
+                    var xmlDoc = parser.parseFromString(xmlContent, 'text/xml');
+                    var xsltDoc = parser.parseFromString(xsltContent, 'text/xml');
+
+                    if (document.implementation && document.implementation.createDocument) {
+                        var xsltProcessor = new XSLTProcessor();
+                        xsltProcessor.importStylesheet(xsltDoc);
+                        
+                        var resultDocument = xsltProcessor.transformToFragment(xmlDoc, document);
+
+                        outputDiv.innerHTML = '';
+                        outputDiv.appendChild(resultDocument);
+                    } else {
+                        outputDiv.innerHTML = 'Tarayıcınız XSLT işleme desteği sunmuyor.';
+                    }
+                };
+
+                xsltReader.readAsText(xsltFile);
+            };
+
+            xmlReader.readAsText(xmlFile);
+        }
+
+        function saveHTML() {
+            var transformedHTML = document.getElementById('output').innerHTML;
+            var fileName = 'transformedHTML_' + new Date().toISOString();
+
+            var file = new Blob([transformedHTML], {type: 'text/html'});
+            var fileURL = URL.createObjectURL(file);
+            window.open(fileURL, '_blank');
+        }
+    </script>
+</body>
+</html>
